@@ -1,6 +1,6 @@
 module github.com/hyperbench/hyperbench-plugins/hyperchain
 
-go 1.17
+go 1.22.4
 
 require (
 	github.com/hyperbench/hyperbench-common v0.0.4
@@ -33,7 +33,7 @@ require (
 	github.com/meshplus/crypto-standard v0.1.2 // indirect
 	github.com/meshplus/flato-msp-cert v0.1.1 // indirect
 	github.com/mholt/archiver/v3 v3.5.1 // indirect
-	github.com/mitchellh/mapstructure v1.4.3 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/nwaples/rardecode v1.1.3 // indirect
@@ -66,7 +66,6 @@ require (
 
 exclude (
 	github.com/fsnotify/fsnotify v1.5.4
-	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5
 	github.com/pierrec/lz4/v4 v4.1.15
@@ -75,7 +74,9 @@ exclude (
 	gopkg.in/ini.v1 v1.67.0
 )
 
-replace golang.org/x/sys => github.com/golang/sys v0.0.0-20220722155257-8c9f86f7a55f
+replace github.com/mitchellh/mapstructure => github.com/mitchellh/mapstructure v1.5.0
+
+replace golang.org/x/sys => github.com/golang/sys v0.26.0
 
 replace golang.org/x/crypto => golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 
