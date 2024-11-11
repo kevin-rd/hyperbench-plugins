@@ -52,7 +52,7 @@ import (
 
 const gasLimit = 300000
 
-//Contract contains the abi and bin files of contract
+// Contract contains the abi and bin files of contract
 type Contract struct {
 	ABI             string
 	BIN             string
@@ -65,7 +65,7 @@ type option struct {
 	noSend bool
 }
 
-//ETH the client of eth
+// ETH the client of eth
 type ETH struct {
 	*base.BlockchainBase
 	ethClient  *ethclient.Client
@@ -85,7 +85,7 @@ type ETH struct {
 	op         option
 }
 
-//Msg contains message of context
+// Msg contains message of context
 type Msg struct {
 	Contract *Contract
 }
@@ -109,7 +109,9 @@ func init() {
 	for i, file := range files {
 		fileName := file.Name()
 		account := fileName[strings.LastIndex(fileName, "-")+1:]
-		privKey, _, err := KeystoreToPrivateKey(configPath+"/keystore/"+fileName, cast.ToString(options["keypassword"]))
+		filePath := configPath + "/keystore/" + fileName
+		log.Debugf("filePath is: %v", filePath)
+		privKey, _, err := KeystoreToPrivateKey(filePath, cast.ToString(options["keypassword"]))
 		if err != nil {
 			log.Errorf("access account file failed: %v", err)
 		}
@@ -226,7 +228,7 @@ func (e *ETH) DeployContract() error {
 	return nil
 }
 
-//Invoke invoke contract with funcName and args in eth network
+// Invoke invoke contract with funcName and args in eth network
 func (e *ETH) Invoke(invoke fcom.Invoke, ops ...fcom.Option) *fcom.Result {
 	instance := bind.NewBoundContract(e.contract.contractAddress, e.contract.parsedAbi, e.ethClient, e.ethClient, e.ethClient)
 	nonce := e.nonce + (e.wkIdx+e.round*e.workerNum)*(e.engineCap/e.workerNum) + e.vmIdx + 1
@@ -289,10 +291,9 @@ func (e *ETH) Verify(result *fcom.Result, ops ...fcom.Option) *fcom.Result {
 	return e.Confirm(result)
 }
 
-//Transfer transfer a amount of money from a account to the other one
+// Transfer transfer a amount of money from a account to the other one
 func (e *ETH) Transfer(args fcom.Transfer, ops ...fcom.Option) (result *fcom.Result) {
 	nonce := e.nonce + (e.wkIdx+e.round*e.workerNum)*(e.engineCap/e.workerNum) + e.vmIdx
-	e.round++
 
 	value := big.NewInt(args.Amount)
 
@@ -303,7 +304,11 @@ func (e *ETH) Transfer(args fcom.Transfer, ops ...fcom.Option) (result *fcom.Res
 	}
 	tx := types.NewTransaction(nonce, toAddress, value, gasLimit, e.gasPrice, data)
 	buildTime := time.Now().UnixNano()
-	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(e.chainID), e.Accounts[args.From])
+	var privateKey = e.Accounts[args.From]
+	if privateKey == nil {
+		e.Logger.Errorf("get account error: %v", e.Accounts)
+	}
+	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(e.chainID), privateKey)
 	if err != nil {
 		return &fcom.Result{
 			Label:     fcom.BuiltinTransferLabel,
@@ -326,6 +331,9 @@ func (e *ETH) Transfer(args fcom.Transfer, ops ...fcom.Option) (result *fcom.Res
 			BuildTime: buildTime,
 			SendTime:  sendTime,
 		}
+	} else {
+		e.Logger.Debugf("transfer send: %v", nonce)
+		e.round++
 	}
 
 	ret := &fcom.Result{
@@ -340,7 +348,7 @@ func (e *ETH) Transfer(args fcom.Transfer, ops ...fcom.Option) (result *fcom.Res
 	return ret
 }
 
-//SetContext set test group context in go client
+// SetContext set test group context in go client
 func (e *ETH) SetContext(context string) error {
 	e.Logger.Debugf("prepare msg: %v", context)
 	msg := &Msg{}
@@ -376,12 +384,12 @@ func (e *ETH) SetContext(context string) error {
 	return nil
 }
 
-//ResetContext reset test group context in go client
+// ResetContext reset test group context in go client
 func (e *ETH) ResetContext() error {
 	return nil
 }
 
-//GetContext generate TxContext
+// GetContext generate TxContext
 func (e *ETH) GetContext() (string, error) {
 
 	msg := &Msg{
@@ -393,7 +401,7 @@ func (e *ETH) GetContext() (string, error) {
 	return string(bytes), err
 }
 
-//Statistic statistic remote node performance
+// Statistic statistic remote node performance
 func (e *ETH) Statistic(statistic fcom.Statistic) (*fcom.RemoteStatistic, error) {
 
 	statisticData, err := GetTPS(e, statistic)
@@ -415,16 +423,16 @@ func (e *ETH) LogStatus() (chainInfo *fcom.ChainInfo, err error) {
 
 // Option ethereum receive options to change the config to client.
 // Supported Options:
-// 1. key: gas
-//    valueType: int
-//    effect: set gas will set gasprice used for transaction
-//            not set gas will let client use gas which initiate when client created
-//    default: default setGas is false, gas is what initiate when client created
-// 2. key: nosend
-//    valueType: bool
-//    effect: set nosend true will let client do not send transaction to node when invoking contract
-//            set nosend false will let client send transaction to node when invoking contract
-//    default: default nosend is false, gas is what initiate when client created
+//  1. key: gas
+//     valueType: int
+//     effect: set gas will set gasprice used for transaction
+//     not set gas will let client use gas which initiate when client created
+//     default: default setGas is false, gas is what initiate when client created
+//  2. key: nosend
+//     valueType: bool
+//     effect: set nosend true will let client do not send transaction to node when invoking contract
+//     set nosend false will let client send transaction to node when invoking contract
+//     default: default nosend is false, gas is what initiate when client created
 func (e *ETH) Option(options fcom.Option) error {
 	for key, value := range options {
 		switch key {
